@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Revisión Semanal de Encargado — Chatello</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f0; color: #2b2b2b; }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+
+  .header {
+    background: #5c3a21; color: #fff; padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .header h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.3px; }
+  .progress { background: #e6e1d6; height: 6px; width: 100%; }
+  .progress-bar { background: #c8935a; height: 100%; width: 0%; transition: width 0.3s ease; }
+
+  .container {
+    flex: 1; display: flex; flex-direction: column;
+    max-width: 540px; width: 100%; margin: 0 auto; padding: 20px 18px 110px 18px;
+  }
+
+  .screen { display: none; animation: fadeIn 0.25s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-tag {
+    display: inline-block; background: #ebd9c1; color: #5c3a21;
+    padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    margin-bottom: 10px; letter-spacing: 0.4px; text-transform: uppercase;
+  }
+  .question-number { font-size: 12px; color: #888; margin-bottom: 6px; }
+  h2 { font-size: 20px; line-height: 1.35; margin-bottom: 14px; color: #2b2b2b; }
+  p.help { font-size: 13px; color: #666; margin-bottom: 18px; line-height: 1.45; }
+
+  .scale {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin: 12px 0 16px 0;
+  }
+  .scale button {
+    border: 2px solid #d6cfc2; background: #fff; padding: 14px 6px;
+    border-radius: 10px; font-size: 14px; font-weight: 600; color: #5c3a21;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .scale button .num { font-size: 22px; font-weight: 700; }
+  .scale button:hover { background: #f9f2e7; }
+  .scale button.selected {
+    background: #c8935a; color: #fff; border-color: #9a6d3d;
+    box-shadow: 0 3px 8px rgba(200,147,90,0.3);
+  }
+  .scale button[data-val="0"].selected { background: #c94a4a; border-color: #8c2020; }
+  .scale button[data-val="1"].selected { background: #e09542; border-color: #a66424; }
+  .scale button[data-val="2"].selected { background: #7a9e5c; border-color: #4d6b36; }
+  .scale button[data-val="3"].selected { background: #3d7a5c; border-color: #1f4d37; }
+
+  /* Rubric — siempre visible */
+  .rubric-card {
+    background: #fdf9f2; border-left: 3px solid #c8935a;
+    border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;
+    font-size: 12px; line-height: 1.6; color: #5c3a21;
+  }
+  .rubric-card .r3 { color: #1f4d37; } .rubric-card .r2 { color: #4d6b36; }
+  .rubric-card .r1 { color: #a66424; } .rubric-card .r0 { color: #8c2020; }
+
+  /* No aplica */
+  .no-aplica-row {
+    display: flex; align-items: center; gap: 10px;
+    background: #f9f2e7; border-radius: 8px; padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .no-aplica-row label { font-size: 13px; color: #5c3a21; margin: 0; font-weight: 600; cursor: pointer; flex: 1; }
+  .no-aplica-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #c8935a; flex-shrink: 0; cursor: pointer; }
+  .scale-disabled { opacity: 0.35; pointer-events: none; }
+
+  /* PA questions */
+  .pa-label {
+    display: inline-block; background: #d5e8dd; color: #1f4d37;
+    padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    margin-bottom: 10px; letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  .pa-intro { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 14px; background: #f9f2e7; padding: 10px 12px; border-radius: 8px; }
+  .pa-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .pa-option {
+    border: 2px solid #d6cfc2; background: #fff; border-radius: 10px;
+    padding: 12px 14px; cursor: pointer; text-align: left; font-size: 13px;
+    font-family: inherit; color: #2b2b2b; line-height: 1.4; transition: all 0.15s;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .pa-option:hover { background: #f9f2e7; }
+  .pa-option.selected { border-color: #5c3a21; background: #f5ede3; }
+  .pa-modifier {
+    flex-shrink: 0; font-size: 11px; font-weight: 800; padding: 3px 7px;
+    border-radius: 999px; white-space: nowrap; margin-top: 1px;
+  }
+  .pa-modifier.neutral { background: #f0ebe0; color: #888; }
+  .pa-modifier.positive { background: #d5e8dd; color: #1f4d37; }
+  .pa-modifier.negative { background: #fce1e1; color: #8c2020; }
+  .pa-modifier.negative-sm { background: #fdecd4; color: #a66424; }
+
+  textarea, input[type="text"], input[type="date"] {
+    width: 100%; border: 1.5px solid #d6cfc2; background: #fff;
+    padding: 10px 12px; border-radius: 8px; font-size: 14px;
+    font-family: inherit; resize: vertical; min-height: 70px;
+    margin-bottom: 12px;
+  }
+  input[type="date"] { min-height: auto; resize: none; }
+  textarea:focus, input[type="text"]:focus, input[type="date"]:focus { outline: none; border-color: #c8935a; }
+  label { font-size: 13px; font-weight: 600; color: #555; display: block; margin-bottom: 6px; }
+
+  .photo-section {
+    border: 1.5px dashed #c8935a; border-radius: 10px; padding: 14px;
+    text-align: center; background: #fdf9f2; margin-bottom: 12px;
+  }
+  .photo-btn {
+    display: inline-block; background: #5c3a21; color: #fff;
+    padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none;
+  }
+  .photo-btn:hover { background: #7a4f30; }
+  input[type="file"] { display: none; }
+  .photo-optional-tag {
+    display: inline-block; background: #ebd9c1; color: #5c3a21;
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+    margin-left: 6px; vertical-align: middle;
+  }
+  .photo-hint {
+    font-size: 12px; color: #888; margin-top: 8px; line-height: 1.4;
+  }
+  .photo-preview {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px;
+  }
+  .photo-preview .thumb {
+    position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden; background: #eee;
+  }
+  .photo-preview .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-preview .thumb .remove {
+    position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.65);
+    color: #fff; border: none; width: 22px; height: 22px; border-radius: 50%;
+    font-size: 14px; cursor: pointer; line-height: 1;
+  }
+
+  .nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid #e0dccf;
+    padding: 12px 16px; display: flex; gap: 10px; justify-content: space-between;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  }
+  .nav button {
+    flex: 1; padding: 14px; border-radius: 10px; font-size: 15px;
+    font-weight: 600; cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .nav .btn-back { background: #f0ebe0; color: #5c3a21; }
+  .nav .btn-next { background: #c8935a; color: #fff; }
+  .nav .btn-next:hover { background: #b07d48; }
+  .nav .btn-submit { background: #3d7a5c; color: #fff; }
+  .nav .btn-submit:hover { background: #2d6047; }
+
+  .field-error { border-color: #c94a4a !important; background: #fdf0f0 !important; }
+  .error-banner {
+    background: #fce1e1; color: #8c2020; border-left: 3px solid #c94a4a;
+    padding: 10px 12px; border-radius: 6px; font-size: 13px;
+    margin-bottom: 12px; line-height: 1.45;
+  }
+
+  /* Intro */
+  .intro {
+    background: #fff; border-radius: 14px; padding: 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+  .intro h2 { font-size: 22px; margin-bottom: 10px; color: #5c3a21; }
+  .intro .form-field { margin-bottom: 14px; }
+  .intro input[type="date"], .intro select {
+    width: 100%; padding: 11px 12px; border: 1.5px solid #d6cfc2;
+    border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff;
+    min-height: auto; resize: none; margin-bottom: 0;
+  }
+  .intro input[type="text"] { min-height: auto; resize: none; margin-bottom: 0; }
+  .legend-box {
+    background: #fdf9f2; border-left: 3px solid #c8935a;
+    padding: 10px 12px; border-radius: 4px; font-size: 13px;
+    color: #5c3a21; margin: 14px 0; line-height: 1.5;
+  }
+
+  /* Summary */
+  .summary-card {
+    background: #fff; border-radius: 12px; padding: 18px; margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .summary-card h3 {
+    color: #5c3a21; font-size: 16px; margin-bottom: 12px;
+    border-bottom: 1px solid #ebd9c1; padding-bottom: 8px;
+  }
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; font-size: 13px; border-bottom: 1px dashed #f0ebe0;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row .label { flex: 1; color: #555; padding-right: 10px; }
+  .summary-row .score {
+    font-weight: 700; padding: 3px 10px; border-radius: 999px; font-size: 12px;
+    min-width: 28px; text-align: center;
+  }
+  .score-0 { background: #fce1e1; color: #a02020; }
+  .score-1 { background: #fdecd4; color: #a66424; }
+  .score-2 { background: #e3efd8; color: #4d6b36; }
+  .score-3 { background: #d5e8dd; color: #1f4d37; }
+  .score-na { background: #f0ebe0; color: #888; }
+
+  .pa-summary-row {
+    padding: 7px 0; font-size: 12px; border-bottom: 1px dashed #f0ebe0; color: #555;
+  }
+  .pa-summary-row:last-child { border-bottom: none; }
+  .pa-summary-row .pa-q { font-weight: 600; color: #5c3a21; margin-bottom: 2px; }
+  .pa-summary-row .pa-a { color: #444; }
+  .pa-mod-badge {
+    display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px;
+    border-radius: 999px; margin-left: 6px;
+  }
+
+  .bonus-banner {
+    background: linear-gradient(135deg, #c8935a, #9a6d3d); color: #fff;
+    padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 14px;
+  }
+  .bonus-banner .amount { font-size: 36px; font-weight: 800; margin: 6px 0; }
+  .bonus-banner .detail { font-size: 13px; opacity: 0.9; }
+
+  .export-actions { display: grid; gap: 10px; margin-top: 14px; }
+  .export-actions button {
+    padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600;
+    cursor: pointer; border: none; background: #5c3a21; color: #fff;
+  }
+  .export-actions button.secondary { background: #f0ebe0; color: #5c3a21; }
+  .export-actions button:hover { opacity: 0.9; }
+
+  @media (min-width: 600px) {
+    .container { padding: 32px 24px 110px 24px; }
+  }
+
+  /* Bonos empleados */
+  .bonos-intro {
+    background: #fdf9f2; border-left: 3px solid #c8935a;
+    padding: 12px 14px; border-radius: 6px; font-size: 13px;
+    color: #5c3a21; margin-bottom: 16px; line-height: 1.5;
+  }
+  .emp-card {
+    background: #fff; border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  }
+  .emp-card .emp-info .emp-name { font-size: 15px; font-weight: 700; color: #2b2b2b; }
+  .emp-card .emp-info .emp-score { font-size: 12px; color: #888; margin-top: 2px; }
+  .emp-badge {
+    padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+  }
+  .emp-badge.aprobado { background: #d5e8dd; color: #1f4d37; }
+  .emp-badge.no-aprobado { background: #fce1e1; color: #8c2020; }
+  .emp-remove {
+    background: none; border: none; color: #ccc; font-size: 20px;
+    cursor: pointer; padding: 2px 6px; line-height: 1; flex-shrink: 0;
+  }
+  .btn-add-emp {
+    width: 100%; padding: 14px; border-radius: 12px;
+    background: #fff; border: 2px dashed #c8935a; color: #c8935a;
+    font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+    transition: all 0.15s;
+  }
+  .btn-add-emp:hover { background: #fdf9f2; }
+  .add-emp-form {
+    background: #fff; border-radius: 14px; padding: 18px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1); margin-bottom: 14px;
+  }
+  .add-emp-form h3 { font-size: 16px; color: #5c3a21; margin-bottom: 14px; }
+  .add-emp-form .emp-name-input {
+    width: 100%; padding: 11px 12px; border: 1.5px solid #d6cfc2;
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+    background: #fff; margin-bottom: 14px; min-height: auto; resize: none;
+  }
+  .add-emp-form .emp-name-input:focus { outline: none; border-color: #c8935a; }
+  .criterion-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 0; border-bottom: 1px dashed #f0ebe0;
+  }
+  .criterion-row .cr-label { font-size: 13px; color: #444; flex: 1; padding-right: 8px; }
+  .criterion-row .cr-btns { display: flex; gap: 5px; }
+  .cr-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    border: 2px solid #e0dccf; background: #fff;
+    font-size: 15px; font-weight: 700; color: #5c3a21;
+    cursor: pointer; transition: all 0.12s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cr-btn.sel-0 { background: #fce1e1; border-color: #c94a4a; color: #8c2020; }
+  .cr-btn.sel-1 { background: #fef3e0; border-color: #e09542; color: #a66424; }
+  .cr-btn.sel-2 { background: #e3efd8; border-color: #7a9e5c; color: #4d6b36; }
+  .cr-btn.sel-3 { background: #d5e8dd; border-color: #3d7a5c; color: #1f4d37; }
+  .emp-total-bar {
+    background: #f9f2e7; border-radius: 10px; padding: 12px 14px;
+    margin: 12px 0 14px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .emp-total-bar .et-label { font-size: 13px; color: #888; }
+  .emp-total-bar .et-num   { font-size: 20px; font-weight: 800; color: #5c3a21; }
+  .emp-total-bar .et-result {
+    font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+  }
+  .form-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-actions .btn-save {
+    padding: 13px; border-radius: 10px; background: #3d7a5c; color: #fff;
+    font-size: 14px; font-weight: 700; border: none; cursor: pointer;
+  }
+  .form-actions .btn-cancel {
+    padding: 13px; border-radius: 10px; background: #f0ebe0; color: #5c3a21;
+    font-size: 14px; font-weight: 700; border: none; cursor: pointer;
+  }
+  .no-emp-msg { text-align: center; padding: 20px; color: #bbb; font-size: 13px; }
+
+  /* Bono entrega card */
+  .emp-bono-card {
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px;
+    border-left: 3px solid #3d7a5c;
+  }
+  .emp-bono-card.aprobado { background: #f0faf4; }
+  .emp-bono-card.no-aprobado { background: #fff5f5; border-left-color: #c94a4a; }
+  .emp-bono-card .emp-bono-name { font-weight: 700; color: #2b2b2b; margin-bottom: 3px; }
+  .emp-bono-card .emp-bono-detail { font-size: 12px; color: #666; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>☕ Revisión Semanal · Chatello</h1>
+  <span id="stepCounter" style="font-size:12px;opacity:0.8;"></span>
+</div>
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="container">
+
+  <!-- INTRO -->
+  <div class="screen active" id="screen-intro">
+    <div class="intro">
+      <h2>Revisión Semanal de Encargado</h2>
+      <p class="help">Antes de empezar, llena los datos generales. La revisión toma aprox. 8–12 minutos.</p>
+
+      <div class="form-field">
+        <label>Fecha de revisión</label>
+        <input type="date" id="fechaRevision">
+      </div>
+      <div class="form-field">
+        <label>Sucursal</label>
+        <select id="sucursal">
+          <option value="">Selecciona...</option>
+          <option value="Tequisquiapan">Tequisquiapan</option>
+          <option value="Himno Nacional">Himno Nacional</option>
+          <option value="Lomas">Lomas</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Encargado evaluado</label>
+        <select id="encargado">
+          <option value="">Selecciona...</option>
+          <option>Carlos Eduardo Nájera Mariscal</option>
+          <option>Irvin Sánchez Cedillo</option>
+          <option>Fernando Yael Briones Castillo</option>
+          <option>Cristian Alejandro Castillo Segura</option>
+          <option>Juan Pablo Parra Morales</option>
+          <option>Jehú Josafat Ávalos Estrada</option>
+          <option>Cruz Lautaro Nahuel</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>¿Quién revisa?</label>
+        <input type="text" id="revisor" placeholder="Tu nombre (supervisor)" style="min-height:auto;resize:none;margin-bottom:0;">
+      </div>
+      <div class="legend-box">
+        <b>Escala de evaluación:</b><br>
+        0 = No cumple &nbsp;·&nbsp; 1 = Regular &nbsp;·&nbsp; 2 = Bien &nbsp;·&nbsp; 3 = Excelente<br>
+        <b>Bono:</b> $100 por cada categoría (promedio ≥ 2.0) · máximo $300/semana
+      </div>
+      <div id="introError" style="display:none;" class="error-banner"></div>
+    </div>
+  </div>
+
+  <!-- PREGUNTAS (generadas dinámicamente) -->
+  <div id="questionContainer"></div>
+
+  <!-- BONOS SEMANALES -->
+  <div class="screen" id="screen-bonos">
+    <span class="section-tag">⭐ Bonos Semanales</span>
+    <h2>Evaluación de empleados</h2>
+    <div class="bonos-intro">
+      Califica a cada empleado en los 5 criterios (escala 0–3).<br>
+      <b>Mínimo 10/15 puntos</b> para que el empleado reciba su bono esta semana.<br>
+      <span id="bonosEncargadoLabel" style="font-size:12px;color:#9a6d3d;margin-top:4px;display:block;"></span>
+    </div>
+
+    <div id="empList"></div>
+
+    <div id="addEmpFormContainer" style="display:none">
+      <div class="add-emp-form">
+        <h3>➕ Nuevo empleado</h3>
+        <input type="text" class="emp-name-input" id="newEmpName" placeholder="Nombre completo del empleado...">
+        <div id="criteriaRows"></div>
+        <div class="emp-total-bar">
+          <span class="et-label">Total</span>
+          <span class="et-num" id="empTotalNum">0 / 15</span>
+          <span class="et-result" id="empTotalResult" style="background:#f0ebe0;color:#888;">—</span>
+        </div>
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="cancelAddEmp()">Cancelar</button>
+          <button class="btn-save" onclick="saveEmp()">Guardar ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-add-emp" id="btnAddEmp" onclick="showAddEmpForm()">
+      ＋ Agregar empleado
+    </button>
+    <div style="font-size:12px;color:#aaa;text-align:center;margin-top:12px;">
+      Puedes continuar al resumen aunque no agregues empleados.
+    </div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="screen" id="screen-summary">
+    <div class="bonus-banner">
+      <div class="detail">BONO SEMANAL CALCULADO</div>
+      <div class="amount" id="bonusAmount">$0</div>
+      <div class="detail" id="bonusDetail">—</div>
+    </div>
+
+    <div id="summaryContent"></div>
+
+    <div class="export-actions">
+      <button onclick="copyReport()">📋 Copiar resumen (WhatsApp)</button>
+      <button class="secondary" onclick="downloadReport()">💾 Descargar reporte</button>
+      <button class="secondary" onclick="location.reload()">🔄 Nueva revisión</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAVEGACIÓN -->
+<div class="nav">
+  <button class="btn-back" id="btnBack" onclick="prev()">← Atrás</button>
+  <button class="btn-next" id="btnNext" onclick="next()">Siguiente →</button>
+</div>
+
+<script>
+// ── Fecha de hoy por defecto ──
+(function() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById('fechaRevision').value = `${yyyy}-${mm}-${dd}`;
+})();
+
+// ============================================================
+// ESTRUCTURA DE CRITERIOS — versión 3.0 (Abr 2026)
+// ============================================================
+const categories = [
+  {
+    name: "Atención al cliente",
+    emoji: "💬",
+    tag: "1 de 3",
+    questions: [
+      {
+        text: "Calificación y comentarios en Google",
+        hint: "Ingresa a Google Maps y revisa los comentarios publicados esta semana.",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Comentarios muy positivos o destacados esta semana" },
+          { level: 2, cls: "r2", text: "Bien → Todos los comentarios son buenos" },
+          { level: 1, cls: "r1", text: "Regular → Comentarios neutros" },
+          { level: 0, cls: "r0", text: "No cumple → Un comentario negativo o calificación de 0–2 estrellas" }
+        ]
+      },
+      {
+        text: "Calificación y comentarios en Uber y Rappi",
+        hint: "Revisa ambas apps de delivery.",
+        noAplicaOption: true,
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Comentarios muy positivos o destacados" },
+          { level: 2, cls: "r2", text: "Bien → Todos los comentarios son buenos" },
+          { level: 1, cls: "r1", text: "Regular → Comentarios neutros" },
+          { level: 0, cls: "r0", text: "No cumple → Un comentario negativo o calificación de 0–2 estrellas" }
+        ]
+      },
+      {
+        text: "Trato amable — saludo y despedida de clientes",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → El empleado es muy agradable y cálido" },
+          { level: 2, cls: "r2", text: "Bien → El empleado es respetuoso y formal" },
+          { level: 1, cls: "r1", text: "Regular → Trato neutro, sin calidez notable" },
+          { level: 0, cls: "r0", text: "No cumple → No saluda, no hace contacto visual o no habla con volumen adecuado" }
+        ]
+      },
+      {
+        text: "Revisión de 3 comandas según tabla de tiempos",
+        hint: "Verifica los tiempos de entrega contra la tabla estándar.",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Se entrega en tiempo récord" },
+          { level: 2, cls: "r2", text: "Bien → Se entrega dentro de lo previsto" },
+          { level: 1, cls: "r1", text: "Regular → Se entrega con leve retraso pero dentro de lo aceptable" },
+          { level: 0, cls: "r0", text: "No cumple → Se demora o se altera el orden de entrega" }
+        ]
+      },
+      {
+        text: "Calidad y presentación sin demora",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Productos muy estéticos y dentro del estándar" },
+          { level: 2, cls: "r2", text: "Bien → Artículos dentro del estándar de estética" },
+          { level: 1, cls: "r1", text: "Regular → Falta algún detalle estético menor" },
+          { level: 0, cls: "r0", text: "No cumple → El producto no es estético o hubo demora notable" }
+        ]
+      }
+    ]
+  },
+  {
+    name: "Limpieza y mantenimiento",
+    emoji: "🧹",
+    tag: "2 de 3",
+    questions: [
+      {
+        text: "Ventana de trastes y mesa de pulido despejadas",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Todo limpio y completamente despejado" },
+          { level: 2, cls: "r2", text: "Bien → Hay pocos trastes o recién los agregaron" },
+          { level: 1, cls: "r1", text: "Regular → Está con acumulación visible pero en proceso" },
+          { level: 0, cls: "r0", text: "No cumple → Sucio y sin otras tareas que justifiquen el descuido" }
+        ]
+      },
+      {
+        text: "Plantas sanas y con buen riego",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Todas las plantas están verdes y vivaces" },
+          { level: 2, cls: "r2", text: "Bien → Mantienen un buen riego general" },
+          { level: 1, cls: "r1", text: "Regular → Algunas plantas muestran descuido leve o riego irregular" },
+          { level: 0, cls: "r0", text: "No cumple → Plantas ahogadas, secas o muertas" }
+        ]
+      },
+      {
+        text: "Lista de acciones diarias en cocina completada",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Todas las tareas de acomodo al corriente" },
+          { level: 2, cls: "r2", text: "Bien → Se está preparando con cierto atraso menor" },
+          { level: 1, cls: "r1", text: "Regular → Parcialmente completada; faltan tareas menores" },
+          { level: 0, cls: "r0", text: "No cumple → Faltan preparaciones y no está realizando otra actividad laboral" }
+        ]
+      },
+      {
+        text: "Lista de acciones diarias en barra completada",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Todas las tareas de acomodo al corriente" },
+          { level: 2, cls: "r2", text: "Bien → Se está preparando con cierto atraso menor" },
+          { level: 1, cls: "r1", text: "Regular → Parcialmente completada; faltan tareas menores" },
+          { level: 0, cls: "r0", text: "No cumple → Faltan preparaciones y no está realizando otra actividad laboral" }
+        ]
+      },
+      {
+        text: "Lista de mantenimiento llena, actualizada y bien realizada",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Todos los nombres correctos y tareas completadas" },
+          { level: 2, cls: "r2", text: "Bien → Realizando las actividades pero con cierto atraso" },
+          { level: 1, cls: "r1", text: "Regular → Las tareas se realizaron de forma incorrecta o incompleta" },
+          { level: 0, cls: "r0", text: "No cumple → No han realizado las tareas o reportaron falsamente haberlas completado" }
+        ]
+      },
+      {
+        text: "Espacio de mesas acomodado y presentable",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Mesas perfectamente alineadas, limpias y con todo en su lugar" },
+          { level: 2, cls: "r2", text: "Bien → Mesas ordenadas y presentables" },
+          { level: 1, cls: "r1", text: "Regular → Falta algún detalle de acomodo o limpieza" },
+          { level: 0, cls: "r0", text: "No cumple → Mesas sucias, en desorden o sin atención visible" }
+        ]
+      },
+      {
+        text: "Acomodo de insumos correcto",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Todo en su lugar, etiquetado y organizado correctamente" },
+          { level: 2, cls: "r2", text: "Bien → La mayoría de insumos en su lugar, orden adecuado" },
+          { level: 1, cls: "r1", text: "Regular → Algunos insumos fuera de lugar o sin etiquetar" },
+          { level: 0, cls: "r0", text: "No cumple → Barra y/o cocina desorganizadas o sucias" }
+        ]
+      },
+      {
+        text: "Orden general de las áreas",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Todas las áreas perfectamente ordenadas y limpias" },
+          { level: 2, cls: "r2", text: "Bien → Áreas en buen estado general con orden visible" },
+          { level: 1, cls: "r1", text: "Regular → Desorden menor en alguna área" },
+          { level: 0, cls: "r0", text: "No cumple → Desorden o suciedad evidentes en una o más áreas" }
+        ]
+      },
+      {
+        text: "Baños limpios, con papel y jabón",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Impecables, con todos los suministros completos" },
+          { level: 2, cls: "r2", text: "Bien → Limpios y con los suministros completos" },
+          { level: 1, cls: "r1", text: "Regular → Limpios pero sin papel o jabón" },
+          { level: 0, cls: "r0", text: "No cumple → Sucios o sin suministros básicos" }
+        ]
+      }
+    ]
+  },
+  {
+    name: "Manejo de personal",
+    emoji: "👥",
+    tag: "3 de 3",
+    questions: [
+      {
+        text: "Puntualidad y asistencia del equipo en el turno",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Todo el equipo presente y a tiempo; incidencias reportadas y resueltas" },
+          { level: 2, cls: "r2", text: "Bien → Un retardo o ausencia manejada correctamente" },
+          { level: 1, cls: "r1", text: "Regular → Incidencia sin resolución adecuada o sin reporte" },
+          { level: 0, cls: "r0", text: "No cumple → Retardos o ausencias sin atención ni comunicación al responsable" }
+        ]
+      },
+      {
+        text: "Distribución correcta de roles y tareas en el turno",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Cada empleado sabe su función y la ejecuta; encargado supervisa activamente" },
+          { level: 2, cls: "r2", text: "Bien → Roles asignados con algún ajuste menor en el turno" },
+          { level: 1, cls: "r1", text: "Regular → Distribución informal o incompleta; algunos sin tarea clara" },
+          { level: 0, cls: "r0", text: "No cumple → Sin distribución visible; el equipo trabaja sin dirección" }
+        ]
+      },
+      {
+        text: "Comunicación y ambiente de trabajo",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Trato respetuoso, comunicación clara y equipo con buena actitud" },
+          { level: 2, cls: "r2", text: "Bien → Ambiente positivo con comunicación funcional" },
+          { level: 1, cls: "r1", text: "Regular → Tensión leve o comunicación deficiente entre integrantes" },
+          { level: 0, cls: "r0", text: "No cumple → Conflicto abierto, mal trato o ambiente negativo en el turno" }
+        ]
+      },
+      {
+        text: "Manejo de situaciones imprevistas o problemas en turno",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Resuelve rápido, informa y documenta sin necesidad de escalar" },
+          { level: 2, cls: "r2", text: "Bien → Resuelve con apoyo pero de forma adecuada" },
+          { level: 1, cls: "r1", text: "Regular → Tarda en resolver o lo escala innecesariamente" },
+          { level: 0, cls: "r0", text: "No cumple → No resuelve o ignora el problema" }
+        ]
+      },
+      {
+        text: "Retroalimentación y corrección al personal en el momento",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Da retroalimentación directa, oportuna y constructiva" },
+          { level: 2, cls: "r2", text: "Bien → Corrige cuando es necesario con buen criterio" },
+          { level: 1, cls: "r1", text: "Regular → Deja pasar errores o corrige de forma inadecuada" },
+          { level: 0, cls: "r0", text: "No cumple → No corrige, o lo hace de forma agresiva o pasiva" }
+        ]
+      },
+      {
+        text: "Supervisión activa del equipo durante el turno",
+        rubric: [
+          { level: 3, cls: "r3", text: "Excelente → Presente en piso, detecta necesidades antes de que se conviertan en problema" },
+          { level: 2, cls: "r2", text: "Bien → Supervisa de forma regular y está disponible" },
+          { level: 1, cls: "r1", text: "Regular → Supervisión esporádica o ausente en momentos clave" },
+          { level: 0, cls: "r0", text: "No cumple → El equipo trabaja sin supervisión visible del encargado" }
+        ]
+      },
+      // Preguntas PA (voz del equipo)
+      {
+        type: "pa",
+        text: "¿Has tenido algún problema con un compañero de trabajo?",
+        hint: "Pregunta directamente a 1–2 empleados del turno. Su respuesta afecta el promedio de esta categoría.",
+        paKey: 0,
+        options: [
+          { label: "Sin problemas o se resolvió bien sin necesitar al encargado", modifier: 0, modClass: "neutral", modLabel: "sin efecto" },
+          { label: "Hubo problema y el encargado intervino y lo resolvió correctamente", modifier: 0.5, modClass: "positive", modLabel: "+0.5" },
+          { label: "Tensión latente que el encargado no ha detectado", modifier: -0.5, modClass: "negative-sm", modLabel: "−0.5" },
+          { label: "Hubo problema y el encargado no intervino o lo ignoró", modifier: -1, modClass: "negative", modLabel: "−1" }
+        ]
+      },
+      {
+        type: "pa",
+        text: "¿Hubo algún problema específico con un cliente?",
+        hint: "Pregunta directamente a 1–2 empleados del turno. Su respuesta afecta el promedio de esta categoría.",
+        paKey: 1,
+        options: [
+          { label: "Sin incidentes con clientes esta semana", modifier: 0, modClass: "neutral", modLabel: "sin efecto" },
+          { label: "Hubo incidente y el encargado lo manejó bien (calmó, resolvió, compensó si aplicaba)", modifier: 0.5, modClass: "positive", modLabel: "+0.5" },
+          { label: "Empleados sin indicaciones claras de cómo reaccionar ante quejas", modifier: -0.5, modClass: "negative-sm", modLabel: "−0.5" },
+          { label: "Hubo incidente y el encargado no intervino o lo manejó mal", modifier: -1, modClass: "negative", modLabel: "−1" }
+        ]
+      },
+      {
+        type: "pa",
+        text: "¿Hubo mucho flujo de trabajo o rush durante el turno?",
+        hint: "Pregunta directamente a 1–2 empleados del turno. Su respuesta afecta el promedio de esta categoría.",
+        paKey: 2,
+        options: [
+          { label: "No hubo rush notable esta semana", modifier: 0, modClass: "neutral", modLabel: "sin efecto" },
+          { label: "Sí hubo rush y el equipo lo manejó bien gracias a la organización del encargado", modifier: 0.5, modClass: "positive", modLabel: "+0.5" },
+          { label: "Sí hubo rush y hubo caos, errores o el encargado no supo organizar", modifier: -1, modClass: "negative", modLabel: "−1" }
+        ]
+      }
+    ]
+  }
+];
+
+// Aplanar preguntas
+let flatQuestions = [];
+categories.forEach((cat, ci) => {
+  cat.questions.forEach((q, qi) => {
+    flatQuestions.push({ ...q, catIndex: ci, qIndex: qi, catName: cat.name, tag: cat.tag, emoji: cat.emoji });
+  });
+});
+
+// Estado
+const state = {
+  currentScreen: 0,
+  totalScreens: flatQuestions.length + 3,
+  answers: flatQuestions.map(q =>
+    q.type === "pa"
+      ? { paOptionIndex: null, comment: "", modifier: 0 }
+      : { score: null, comment: "", photos: [], noAplica: false }
+  ),
+  meta: {},
+  employees: []
+};
+
+// ============================================================
+// Generar pantallas de preguntas
+// ============================================================
+const qContainer = document.getElementById("questionContainer");
+
+flatQuestions.forEach((q, idx) => {
+  const div = document.createElement("div");
+  div.className = "screen";
+  div.id = `screen-q${idx}`;
+
+  if (q.type === "pa") {
+    div.innerHTML = `
+      <span class="section-tag">${q.emoji} ${q.catName} · ${q.tag}</span>
+      <span class="pa-label">📣 Voz del equipo</span>
+      <div class="question-number">Pregunta ${idx+1} de ${flatQuestions.length}</div>
+      <h2>${q.text}</h2>
+      <p class="pa-intro">${q.hint}<br><span style="font-size:11px;color:#888;margin-top:4px;display:block;">La opción que selecciones ajusta el promedio de esta categoría.</span></p>
+      <div class="pa-options" id="pa-opts-${idx}">
+        ${q.options.map((opt, oi) => `
+          <button class="pa-option" id="pa-opt-${idx}-${oi}" onclick="setPAOption(${idx}, ${oi}, ${opt.modifier})">
+            <span class="pa-modifier ${opt.modClass}">${opt.modLabel}</span>
+            <span>${opt.label}</span>
+          </button>
+        `).join("")}
+      </div>
+      <label>Comentario / detalle (opcional)</label>
+      <textarea id="comment-${idx}" placeholder="Qué te contaron, cómo se resolvió, observaciones..." oninput="setComment(${idx}, this.value)"></textarea>
+    `;
+  } else {
+    const rubricHTML = q.rubric
+      ? `<div class="rubric-card">${q.rubric.map(r => `<div class="${r.cls}"><b>${r.level}</b> · ${r.text}</div>`).join("")}</div>`
+      : "";
+
+    const noAplicaHTML = q.noAplicaOption ? `
+      <div class="no-aplica-row">
+        <input type="checkbox" id="na-${idx}" onchange="toggleNoAplica(${idx}, this.checked)">
+        <label for="na-${idx}">No aplica para esta sucursal (no afecta el resultado)</label>
+      </div>
+    ` : "";
+
+    div.innerHTML = `
+      <span class="section-tag">${q.emoji} ${q.catName} · ${q.tag}</span>
+      <div class="question-number">Pregunta ${idx+1} de ${flatQuestions.length}</div>
+      <h2>${q.text}</h2>
+      ${q.hint ? `<p class="help">${q.hint}</p>` : ''}
+
+      ${noAplicaHTML}
+
+      <label>Calificación</label>
+      <div class="scale" id="scale-${idx}">
+        <button data-val="0" onclick="setScore(${idx}, 0)"><span class="num">0</span><span>No cumple</span></button>
+        <button data-val="1" onclick="setScore(${idx}, 1)"><span class="num">1</span><span>Regular</span></button>
+        <button data-val="2" onclick="setScore(${idx}, 2)"><span class="num">2</span><span>Bien</span></button>
+        <button data-val="3" onclick="setScore(${idx}, 3)"><span class="num">3</span><span>Excelente</span></button>
+      </div>
+
+      ${rubricHTML}
+
+      <label>Comentario (opcional)</label>
+      <textarea id="comment-${idx}" placeholder="Detalles, observaciones o plan de acción..." oninput="setComment(${idx}, this.value)"></textarea>
+
+      <div class="photo-section">
+        <label for="photo-${idx}" class="photo-btn">📷 Tomar o subir foto</label>
+        <span class="photo-optional-tag">Opcional</span>
+        <input type="file" id="photo-${idx}" accept="image/*" capture="environment" multiple onchange="addPhotos(${idx}, this.files)">
+        <div class="photo-hint">Solo si hay algo fuera de lo normal que quieras evidenciar</div>
+        <div class="photo-preview" id="preview-${idx}"></div>
+      </div>
+    `;
+  }
+
+  qContainer.appendChild(div);
+});
+
+// ============================================================
+// Navegación
+// ============================================================
+function showScreen(n) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  let id;
+  if (n === 0) id = "screen-intro";
+  else if (n === state.totalScreens - 1) { id = "screen-summary"; buildSummary(); }
+  else if (n === state.totalScreens - 2) {
+    id = "screen-bonos";
+    renderEmpList();
+    const lbl = document.getElementById("bonosEncargadoLabel");
+    if (lbl) lbl.textContent = `El bono lo entrega: ${state.meta.encargado || '—'}`;
+  }
+  else id = `screen-q${n-1}`;
+  const target = document.getElementById(id);
+  if (target) target.classList.add("active");
+  state.currentScreen = n;
+  updateNav();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function updateNav() {
+  const btnBack = document.getElementById("btnBack");
+  const btnNext = document.getElementById("btnNext");
+  btnBack.style.display = state.currentScreen === 0 ? "none" : "block";
+
+  if (state.currentScreen === state.totalScreens - 1) {
+    btnNext.style.display = "none";
+  } else if (state.currentScreen === state.totalScreens - 2) {
+    btnNext.style.display = "block";
+    btnNext.textContent = "Ver resumen →";
+    btnNext.className = "btn-submit";
+  } else if (state.currentScreen === state.totalScreens - 3) {
+    btnNext.style.display = "block";
+    btnNext.textContent = "Evaluar empleados →";
+    btnNext.className = "btn-next";
+  } else {
+    btnNext.style.display = "block";
+    btnNext.textContent = "Siguiente →";
+    btnNext.className = "btn-next";
+  }
+
+  btnNext.disabled = false;
+  document.getElementById("stepCounter").textContent =
+    state.currentScreen > 0 && state.currentScreen < state.totalScreens - 1
+      ? `${state.currentScreen}/${flatQuestions.length}` : "";
+}
+
+function updateProgress() {
+  const pct = (state.currentScreen / (state.totalScreens - 1)) * 100;
+  document.getElementById("progressBar").style.width = pct + "%";
+}
+
+function next() {
+  if (state.currentScreen === 0) {
+    const fields = [
+      { id: "fechaRevision", label: "Fecha de revisión" },
+      { id: "sucursal", label: "Sucursal" },
+      { id: "encargado", label: "Encargado evaluado" },
+      { id: "revisor", label: "Quién revisa" }
+    ];
+    const missing = [];
+    fields.forEach(f => {
+      const el = document.getElementById(f.id);
+      const v = (el.value || "").trim();
+      if (!v) { missing.push(f.label); el.classList.add("field-error"); }
+      else { el.classList.remove("field-error"); }
+    });
+    const errBox = document.getElementById("introError");
+    if (missing.length) {
+      errBox.style.display = "block";
+      errBox.innerHTML = "⚠️ Falta llenar: <b>" + missing.join(", ") + "</b>";
+      errBox.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    errBox.style.display = "none";
+    const rawDate = document.getElementById("fechaRevision").value;
+    const [y, m, d] = rawDate.split("-");
+    const months = ["","ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    state.meta = {
+      fecha: `${d}/${months[parseInt(m)]}/${y}`,
+      sucursal: document.getElementById("sucursal").value,
+      encargado: document.getElementById("encargado").value.trim(),
+      revisor: document.getElementById("revisor").value.trim(),
+      fechaCaptura: new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
+    };
+  }
+  else if (state.currentScreen > 0 && state.currentScreen < state.totalScreens - 2) {
+    const idx = state.currentScreen - 1;
+    const q = flatQuestions[idx];
+    if (q.type === "pa") {
+      // PA: opcional
+    } else {
+      const ans = state.answers[idx];
+      if (!ans.noAplica && ans.score === null) {
+        alert("⚠️ Selecciona una calificación (0–3) antes de continuar, o marca 'No aplica' si corresponde.");
+        return;
+      }
+    }
+  }
+  if (state.currentScreen < state.totalScreens - 1) showScreen(state.currentScreen + 1);
+}
+
+function prev() { if (state.currentScreen > 0) showScreen(state.currentScreen - 1); }
+
+// ============================================================
+// Captura de respuestas
+// ============================================================
+function setScore(idx, val) {
+  state.answers[idx].score = val;
+  const buttons = document.querySelectorAll(`#screen-q${idx} .scale button`);
+  buttons.forEach(b => b.classList.toggle("selected", parseInt(b.dataset.val) === val));
+}
+
+function toggleNoAplica(idx, checked) {
+  state.answers[idx].noAplica = checked;
+  const scale = document.getElementById(`scale-${idx}`);
+  if (scale) scale.classList.toggle("scale-disabled", checked);
+  if (checked) {
+    state.answers[idx].score = null;
+    document.querySelectorAll(`#screen-q${idx} .scale button`).forEach(b => b.classList.remove("selected"));
+  }
+}
+
+function setPAOption(idx, oi, modifier) {
+  state.answers[idx].paOptionIndex = oi;
+  state.answers[idx].modifier = modifier;
+  const q = flatQuestions[idx];
+  q.options.forEach((_, i) => {
+    const btn = document.getElementById(`pa-opt-${idx}-${i}`);
+    if (btn) btn.classList.toggle("selected", i === oi);
+  });
+}
+
+function setComment(idx, val) { state.answers[idx].comment = val; }
+
+function addPhotos(idx, files) {
+  [...files].forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      state.answers[idx].photos.push({ name: file.name, data: e.target.result });
+      renderPhotos(idx);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPhotos(idx) {
+  const preview = document.getElementById(`preview-${idx}`);
+  if (!preview) return;
+  preview.innerHTML = state.answers[idx].photos.map((p, i) => `
+    <div class="thumb">
+      <img src="${p.data}" alt="">
+      <button class="remove" onclick="removePhoto(${idx}, ${i})">×</button>
+    </div>
+  `).join("");
+}
+
+function removePhoto(idx, pi) {
+  state.answers[idx].photos.splice(pi, 1);
+  renderPhotos(idx);
+}
+
+// ============================================================
+// BONOS SEMANALES — Empleados operativos
+// ============================================================
+const bonoCriteria = ["Atención al cliente","Calidad y rapidez","Cierres y aperturas","Limpieza","Actitud positiva"];
+let tempEmpScores = [null,null,null,null,null];
+
+function renderEmpList() {
+  const list = document.getElementById("empList");
+  if (!state.employees.length) {
+    list.innerHTML = `<div class="no-emp-msg">☝️ Aún no has agregado empleados.<br>Usa el botón de abajo para evaluar a tu equipo.</div>`;
+    return;
+  }
+  list.innerHTML = state.employees.map((emp, i) => `
+    <div class="emp-card">
+      <div class="emp-info">
+        <div class="emp-name">${emp.name}</div>
+        <div class="emp-score">${emp.total}/15 pts · ${emp.scores.join('-')}</div>
+      </div>
+      <span class="emp-badge ${emp.approved ? 'aprobado' : 'no-aprobado'}">
+        ${emp.approved ? '✅ APROBADO' : '❌ NO APROBADO'}
+      </span>
+      <button class="emp-remove" onclick="removeEmp(${i})" title="Eliminar">×</button>
+    </div>
+  `).join("");
+}
+
+function showAddEmpForm() {
+  tempEmpScores = [null,null,null,null,null];
+  document.getElementById("newEmpName").value = "";
+  document.getElementById("addEmpFormContainer").style.display = "block";
+  document.getElementById("btnAddEmp").style.display = "none";
+  document.getElementById("criteriaRows").innerHTML = bonoCriteria.map((crit, ci) => `
+    <div class="criterion-row">
+      <span class="cr-label">${crit}</span>
+      <div class="cr-btns">
+        ${[0,1,2,3].map(v => `<button class="cr-btn" id="cr-${ci}-${v}" onclick="setCrScore(${ci},${v})">${v}</button>`).join("")}
+      </div>
+    </div>
+  `).join("");
+  updateEmpTotal();
+  setTimeout(() => document.getElementById("newEmpName").focus(), 100);
+}
+
+function setCrScore(ci, val) {
+  tempEmpScores[ci] = val;
+  [0,1,2,3].forEach(v => {
+    const btn = document.getElementById(`cr-${ci}-${v}`);
+    if (btn) btn.className = `cr-btn${v === val ? ` sel-${v}` : ''}`;
+  });
+  updateEmpTotal();
+}
+
+function updateEmpTotal() {
+  const filled = tempEmpScores.filter(s => s !== null);
+  const total = filled.reduce((a,b) => a+b, 0);
+  const allFilled = filled.length === 5;
+  document.getElementById("empTotalNum").textContent = `${total} / 15`;
+  const res = document.getElementById("empTotalResult");
+  if (!allFilled) { res.textContent = "—"; res.style.background = "#f0ebe0"; res.style.color = "#888"; }
+  else if (total >= 10) { res.textContent = "✅ APROBADO"; res.style.background = "#d5e8dd"; res.style.color = "#1f4d37"; }
+  else { res.textContent = "❌ NO APROBADO"; res.style.background = "#fce1e1"; res.style.color = "#8c2020"; }
+}
+
+function saveEmp() {
+  const name = (document.getElementById("newEmpName").value || "").trim();
+  if (!name) { alert("⚠️ Escribe el nombre del empleado."); return; }
+  if (tempEmpScores.filter(s => s === null).length > 0) { alert("⚠️ Califica todos los criterios antes de guardar."); return; }
+  const total = tempEmpScores.reduce((a,b) => a+b, 0);
+  state.employees.push({ name, scores: [...tempEmpScores], total, approved: total >= 10 });
+  document.getElementById("addEmpFormContainer").style.display = "none";
+  document.getElementById("btnAddEmp").style.display = "block";
+  renderEmpList();
+}
+
+function cancelAddEmp() {
+  document.getElementById("addEmpFormContainer").style.display = "none";
+  document.getElementById("btnAddEmp").style.display = "block";
+}
+function removeEmp(i) { state.employees.splice(i,1); renderEmpList(); }
+
+// ============================================================
+// Cálculo de bono
+// ============================================================
+function calcBonus() {
+  const results = categories.map((cat, ci) => {
+    const catFlatIdxs = flatQuestions.map((fq,i) => ({fq,i})).filter(({fq}) => fq.catIndex === ci);
+
+    // Preguntas regulares — excluir las marcadas como "No aplica"
+    const regular = catFlatIdxs.filter(({fq}) => fq.type !== "pa");
+    const scores = regular
+      .filter(({i}) => !state.answers[i].noAplica)
+      .map(({i}) => state.answers[i].score)
+      .filter(s => s !== null);
+
+    // Cat. 1: agregar promedio encuestas internas si está disponible
+    if (ci === 0 && state.meta.encuestasScore !== null && state.meta.encuestasScore !== undefined) {
+      scores.push(state.meta.encuestasScore);
+    }
+
+    const baseAvg = scores.length ? scores.reduce((a,b) => a+b, 0) / scores.length : 0;
+
+    // Modificadores PA
+    const paTotal = catFlatIdxs
+      .filter(({fq}) => fq.type === "pa")
+      .reduce((sum,{i}) => sum + (state.answers[i].modifier || 0), 0);
+
+    const finalAvg = Math.min(3, Math.max(0, baseAvg + paTotal));
+    const approved = finalAvg >= 2.0;
+    return { name: cat.name, emoji: cat.emoji, baseAvg, paTotal, finalAvg, approved };
+  });
+
+  const approvedCount = results.filter(r => r.approved).length;
+  return { results, bonus: approvedCount * 100, approvedCount };
+}
+
+// ============================================================
+// Resumen
+// ============================================================
+function buildSummary() {
+  const { results, bonus, approvedCount } = calcBonus();
+  document.getElementById("bonusAmount").textContent = `$${bonus}`;
+  document.getElementById("bonusDetail").textContent =
+    `${approvedCount}/3 categorías · ${state.meta.encargado} · ${state.meta.fecha}`;
+
+  let html = `
+    <div class="summary-card">
+      <h3>📋 Datos generales</h3>
+      <div class="summary-row"><span class="label">Fecha revisión</span><span>${state.meta.fecha}</span></div>
+      <div class="summary-row"><span class="label">Sucursal</span><span>${state.meta.sucursal}</span></div>
+      <div class="summary-row"><span class="label">Encargado</span><span>${state.meta.encargado}</span></div>
+      <div class="summary-row"><span class="label">Revisor</span><span>${state.meta.revisor}</span></div>
+      <div class="summary-row"><span class="label">Capturado</span><span>${state.meta.fechaCaptura}</span></div>
+    </div>
+  `;
+
+  categories.forEach((cat, ci) => {
+    const catFlat = flatQuestions.map((fq,i) => ({fq,ans:state.answers[i],i})).filter(({fq}) => fq.catIndex === ci);
+    const regular = catFlat.filter(({fq}) => fq.type !== "pa");
+    const paItems = catFlat.filter(({fq}) => fq.type === "pa");
+    const r = results[ci];
+    const photosCount = regular.reduce((sum,{ans}) => sum + (ans.photos ? ans.photos.length : 0), 0);
+    const avgColor = r.approved ? '#3d7a5c' : '#c94a4a';
+    let avgLabel = `Base: ${r.baseAvg.toFixed(2)}`;
+    if (r.paTotal !== 0) avgLabel += ` | Ajuste PA: ${r.paTotal > 0 ? '+' : ''}${r.paTotal.toFixed(1)} | Final: ${r.finalAvg.toFixed(2)}`;
+    else avgLabel += ` | Final: ${r.finalAvg.toFixed(2)}`;
+
+    html += `<div class="summary-card">
+      <h3>${cat.emoji} ${cat.name}
+        <span style="float:right;font-size:12px;color:${avgColor};">${r.finalAvg.toFixed(2)} · ${r.approved ? '✅ $100' : '❌ Sin bono'}</span>
+      </h3>
+      <div style="font-size:11px;color:#888;margin-bottom:8px;">${avgLabel}</div>`;
+
+    // Cat. 1: mostrar promedio encuestas internas al inicio
+    if (ci === 0) {
+      const es = state.meta.encuestasScore;
+      const esCls = es !== null && es !== undefined ? `score-${es}` : 'score-na';
+      const esVal = es !== null && es !== undefined ? es : '—';
+      html += `<div class="summary-row"><span class="label">📊 Promedio encuestas internas<br><em style="font-size:11px;color:#888;">Dato Claude (lunes)</em></span><span class="score ${esCls}">${esVal}</span></div>`;
+    }
+
+    regular.forEach(({fq,ans}) => {
+      if (ans.noAplica) {
+        html += `<div class="summary-row"><span class="label">${fq.text}</span><span class="score score-na">N/A</span></div>`;
+      } else {
+        const cls = `score-${ans.score}`;
+        html += `<div class="summary-row"><span class="label">${fq.text}${ans.comment ? `<br><em style="font-size:11px;color:#888;">💬 ${ans.comment}</em>` : ''}</span><span class="score ${cls}">${ans.score ?? '—'}</span></div>`;
+      }
+    });
+
+    if (paItems.length) {
+      html += `<div style="font-size:11px;font-weight:700;color:#5c3a21;margin:10px 0 4px;text-transform:uppercase;letter-spacing:0.3px;">📣 Voz del equipo</div>`;
+      paItems.forEach(({fq,ans}) => {
+        const selectedOpt = fq.options && ans.paOptionIndex !== null ? fq.options[ans.paOptionIndex] : null;
+        const modText = selectedOpt ? (selectedOpt.modifier === 0 ? 'sin efecto' : (selectedOpt.modifier > 0 ? `+${selectedOpt.modifier}` : `${selectedOpt.modifier}`)) : '—';
+        const modBg = !selectedOpt || selectedOpt.modifier === 0 ? '#f0ebe0' : selectedOpt.modifier > 0 ? '#d5e8dd' : '#fce1e1';
+        const modColor = !selectedOpt || selectedOpt.modifier === 0 ? '#888' : selectedOpt.modifier > 0 ? '#1f4d37' : '#8c2020';
+        html += `<div class="pa-summary-row">
+          <div class="pa-q">${fq.text}</div>
+          <div class="pa-a">${selectedOpt ? selectedOpt.label : '<em>Sin respuesta</em>'}
+            <span class="pa-mod-badge" style="background:${modBg};color:${modColor};">${modText}</span>
+          </div>
+          ${ans.comment ? `<div style="font-size:11px;color:#888;margin-top:2px;">💬 ${ans.comment}</div>` : ''}
+        </div>`;
+      });
+    }
+
+    if (photosCount) html += `<div style="font-size:12px;color:#888;margin-top:8px;">📸 ${photosCount} foto(s) adjuntada(s)</div>`;
+    html += `</div>`;
+  });
+
+  // Bonos empleados
+  if (state.employees.length) {
+    const approvedEmps = state.employees.filter(e => e.approved).length;
+    html += `<div class="summary-card">
+      <h3>⭐ Bonos empleados operativos
+        <span style="float:right;font-size:13px;color:#5c3a21;">${approvedEmps}/${state.employees.length} aprobados</span>
+      </h3>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">
+        El bono lo entrega: <b style="color:#5c3a21;">${state.meta.encargado}</b>
+      </div>`;
+
+    state.employees.forEach(emp => {
+      const cardCls = emp.approved ? "aprobado" : "no-aprobado";
+      const icon = emp.approved ? "✅" : "❌";
+      const detail = emp.approved
+        ? `Recibe bono · Entrega: ${state.meta.encargado}`
+        : `No califica para bono esta semana`;
+      html += `<div class="emp-bono-card ${cardCls}">
+        <div class="emp-bono-name">${icon} ${emp.name} — ${emp.total}/15 pts</div>
+        <div class="emp-bono-detail">${bonoCriteria.map((c,i) => `${c}: ${emp.scores[i]}`).join(' · ')}</div>
+        <div class="emp-bono-detail" style="margin-top:4px;font-style:italic;">${detail}</div>
+      </div>`;
+    });
+
+    html += `</div>`;
+  }
+
+  document.getElementById("summaryContent").innerHTML = html;
+}
+
+// ============================================================
+// Exportar
+// ============================================================
+function buildTextReport() {
+  const { results, bonus, approvedCount } = calcBonus();
+  let t = `☕ REVISIÓN SEMANAL CHATELLO\n━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  t += `📅 Fecha revisión: ${state.meta.fecha}\n`;
+  t += `🏪 Sucursal: ${state.meta.sucursal}\n`;
+  t += `👤 Encargado: ${state.meta.encargado}\n`;
+  t += `✍️ Revisor: ${state.meta.revisor}\n`;
+  t += `📆 Capturado: ${state.meta.fechaCaptura}\n\n`;
+  t += `💰 BONO ENCARGADO: $${bonus} (${approvedCount}/3 categorías)\n`;
+  t += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  categories.forEach((cat, ci) => {
+    const catFlat = flatQuestions.map((fq,i) => ({fq,ans:state.answers[i]})).filter(({fq}) => fq.catIndex === ci);
+    const regular = catFlat.filter(({fq}) => fq.type !== "pa");
+    const paItems = catFlat.filter(({fq}) => fq.type === "pa");
+    const r = results[ci];
+
+    t += `${cat.emoji} ${cat.name.toUpperCase()}\n`;
+    t += `Promedio: ${r.finalAvg.toFixed(2)}`;
+    if (r.paTotal !== 0) t += ` (base ${r.baseAvg.toFixed(2)} + ajuste PA ${r.paTotal > 0 ? '+' : ''}${r.paTotal.toFixed(1)})`;
+    t += ` — ${r.approved ? '✅ APROBADO ($100)' : '❌ NO APROBADO'}\n`;
+
+    // Cat. 1: incluir promedio encuestas internas
+    if (ci === 0) {
+      const es = state.meta.encuestasScore;
+      t += `  • Promedio encuestas internas (Claude): ${es !== null && es !== undefined ? es : 'No disponible'}\n`;
+    }
+
+    regular.forEach(({fq,ans}) => {
+      if (ans.noAplica) {
+        t += `  • ${fq.text}: N/A (no aplica esta sucursal)\n`;
+      } else {
+        t += `  • ${fq.text}: ${ans.score ?? '—'}\n`;
+        if (ans.comment) t += `    💬 ${ans.comment}\n`;
+      }
+    });
+
+    if (paItems.length) {
+      t += `  📣 Voz del equipo:\n`;
+      paItems.forEach(({fq,ans}) => {
+        const opt = fq.options && ans.paOptionIndex !== null ? fq.options[ans.paOptionIndex] : null;
+        t += `  • ${fq.text}\n    → ${opt ? opt.label : 'Sin respuesta'} (${opt ? (opt.modifier > 0 ? '+' : '') + opt.modifier : '0'})\n`;
+        if (ans.comment) t += `    💬 ${ans.comment}\n`;
+      });
+    }
+
+    const photos = regular.reduce((n,{ans}) => n + (ans.photos ? ans.photos.length : 0), 0);
+    if (photos) t += `  📸 ${photos} foto(s) adjuntada(s)\n`;
+    t += `\n`;
+  });
+
+  if (state.employees.length) {
+    const approvedEmps = state.employees.filter(e => e.approved).length;
+    t += `⭐ BONOS EMPLEADOS OPERATIVOS\n`;
+    t += `${approvedEmps}/${state.employees.length} empleados aprobados\n`;
+    t += `El bono lo entrega: ${state.meta.encargado}\n\n`;
+    state.employees.forEach(emp => {
+      t += `  • ${emp.name}: ${emp.total}/15 pts — ${emp.approved ? '✅ APROBADO (recibe bono)' : '❌ NO APROBADO'}\n`;
+      t += `    ${bonoCriteria.map((c,i) => `${c}: ${emp.scores[i]}`).join(' | ')}\n`;
+    });
+    t += `\n`;
+  }
+
+  t += `━━━━━━━━━━━━━━━━━━━━━━━━━\nChatello RRHH v3.0`;
+  return t;
+}
+
+function copyReport() {
+  const text = buildTextReport();
+  navigator.clipboard.writeText(text).then(() => {
+    alert("✅ Resumen copiado. Ya lo puedes pegar en WhatsApp.");
+  }).catch(() => {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta);
+    alert("✅ Resumen copiado.");
+  });
+}
+
+function downloadReport() {
+  const text = buildTextReport();
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const name = `Revision_${state.meta.encargado.replace(/\s+/g,'_')}_${state.meta.fecha.replace(/\//g,'-')}.txt`;
+  a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Validación en tiempo real (intro)
+["fechaRevision","sucursal","encargado","revisor"].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  ["input","change","keyup","blur"].forEach(ev => el.addEventListener(ev, updateNav));
+});
+document.addEventListener("click", () => { if (state.currentScreen === 0) updateNav(); });
+
+// Inicializar
+updateNav();
+</script>
+</body>
+</html>
