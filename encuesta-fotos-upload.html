@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Chatello — Subir Encuestas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f0;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #5c3a21;
+      color: white;
+      padding: 18px 20px 14px;
+      text-align: center;
+    }
+    header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+    header p  { font-size: 12px; opacity: 0.75; margin-top: 3px; }
+
+    .card {
+      background: white;
+      margin: 16px;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #5c3a21;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    select, input[type="date"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #e0d8d0;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #333;
+      background: #fafaf8;
+      appearance: none;
+      -webkit-appearance: none;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    select:focus, input[type="date"]:focus {
+      border-color: #c8935a;
+    }
+
+    .foto-zona {
+      border: 2.5px dashed #c8935a;
+      border-radius: 14px;
+      background: #fdf8f3;
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .foto-zona:active { background: #f3ead8; }
+    .foto-zona .icono { font-size: 42px; margin-bottom: 8px; }
+    .foto-zona p { font-size: 14px; color: #5c3a21; font-weight: 600; }
+    .foto-zona span { font-size: 12px; color: #999; }
+
+    #inputFotos { display: none; }
+
+    #previewGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .thumb-wrap {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #eee;
+    }
+    .thumb-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .thumb-wrap .del {
+      position: absolute;
+      top: 3px; right: 3px;
+      background: rgba(0,0,0,0.55);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .thumb-count {
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      margin-top: 8px;
+    }
+
+    #btnEnviar {
+      display: block;
+      width: calc(100% - 32px);
+      margin: 0 16px 24px;
+      padding: 16px;
+      background: #c8935a;
+      color: white;
+      font-size: 17px;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: background 0.2s;
+    }
+    #btnEnviar:active  { background: #a8733a; }
+    #btnEnviar:disabled { background: #ccc; cursor: default; }
+
+    /* Barra de progreso */
+    #barraWrap {
+      display: none;
+      margin: 0 16px 12px;
+    }
+    #barraFondo {
+      background: #e0d8d0;
+      border-radius: 10px;
+      height: 10px;
+      overflow: hidden;
+    }
+    #barraRelleno {
+      background: #c8935a;
+      height: 10px;
+      width: 0%;
+      border-radius: 10px;
+      transition: width 0.3s;
+    }
+    #barraTexto {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    /* Mensaje final */
+    #mensajeFinal {
+      display: none;
+      margin: 0 16px 24px;
+      padding: 20px;
+      background: #e8f5e9;
+      border-radius: 14px;
+      text-align: center;
+    }
+    #mensajeFinal .ok { font-size: 40px; margin-bottom: 8px; }
+    #mensajeFinal p { color: #2e7d32; font-weight: 600; font-size: 15px; }
+    #mensajeFinal small { color: #555; font-size: 12px; }
+
+    #mensajeError {
+      display: none;
+      margin: 0 16px 16px;
+      padding: 14px;
+      background: #fdecea;
+      border-radius: 12px;
+      color: #c62828;
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>☕ Chatello Encuestas</h1>
+  <p>Sube las fotos del día</p>
+</header>
+
+<div class="card">
+  <label>Encargado</label>
+  <select id="encargado">
+    <option value="">— Selecciona —</option>
+    <option>Carlos Eduardo Nájera Mariscal</option>
+    <option>Cruz Lautaro Nahuel</option>
+    <option>Fernando Yael Briones Castillo</option>
+    <option>Irvin Sánchez Cedillo</option>
+    <option>Jehú Josafat Ávalos Estrada</option>
+    <option>Juan Pablo Parra Morales</option>
+  </select>
+
+  <label>Sucursal</label>
+  <select id="sucursal">
+    <option value="">— Selecciona —</option>
+    <option>Tequisquiapan / Carranza</option>
+    <option>Himno Nacional</option>
+    <option>Lomas / Kennedy</option>
+  </select>
+
+  <label>Fecha</label>
+  <input type="date" id="fecha" />
+</div>
+
+<div class="card">
+  <label>Fotos de encuestas</label>
+  <div class="foto-zona" onclick="document.getElementById('inputFotos').click()">
+    <div class="icono">📷</div>
+    <p>Toca aquí para agregar fotos</p>
+    <span>Puedes seleccionar varias a la vez</span>
+  </div>
+  <input type="file" id="inputFotos" accept="image/*" multiple capture="environment" />
+  <div id="previewGrid"></div>
+  <p class="thumb-count" id="contadorFotos"></p>
+</div>
+
+<div id="barraWrap">
+  <div id="barraFondo"><div id="barraRelleno"></div></div>
+  <p id="barraTexto">Subiendo...</p>
+</div>
+
+<div id="mensajeError"></div>
+
+<button id="btnEnviar" onclick="enviar()">Finalizar registro →</button>
+
+<div id="mensajeFinal">
+  <div class="ok">✅</div>
+  <p>¡Encuestas enviadas!</p>
+  <small id="resumenFinal"></small>
+</div>
+
+<script>
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzaK66vrwOhXnvY_-JTBn8rX14J3UiGIdBXOF9HN1TyRd-0bcfNhKuDXtKPjBMMH13o2w/exec';
+
+  let archivos = [];
+
+  // Poner fecha de hoy por defecto
+  const hoy = new Date();
+  const yyyy = hoy.getFullYear();
+  const mm   = String(hoy.getMonth()+1).padStart(2,'0');
+  const dd   = String(hoy.getDate()).padStart(2,'0');
+  document.getElementById('fecha').value = `${yyyy}-${mm}-${dd}`;
+
+  document.getElementById('inputFotos').addEventListener('change', function(e) {
+    const nuevos = Array.from(e.target.files);
+    archivos = archivos.concat(nuevos);
+    renderPreviews();
+    // reset input para poder agregar más
+    this.value = '';
+  });
+
+  function renderPreviews() {
+    const grid = document.getElementById('previewGrid');
+    grid.innerHTML = '';
+    archivos.forEach((f, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'thumb-wrap';
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      const btn = document.createElement('button');
+      btn.className = 'del';
+      btn.innerHTML = '×';
+      btn.onclick = () => { archivos.splice(i,1); renderPreviews(); };
+      wrap.appendChild(img);
+      wrap.appendChild(btn);
+      grid.appendChild(wrap);
+    });
+    const n = archivos.length;
+    document.getElementById('contadorFotos').textContent =
+      n === 0 ? '' : `${n} foto${n>1?'s':''} lista${n>1?'s':''}`;
+  }
+
+  function toBase64(file) {
+    return new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload  = e => res(e.target.result.split(',')[1]);
+      reader.onerror = rej;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function enviar() {
+    const encargado = document.getElementById('encargado').value;
+    const sucursal  = document.getElementById('sucursal').value;
+    const fecha     = document.getElementById('fecha').value;
+
+    if (!encargado || !sucursal || !fecha) {
+      mostrarError('Por favor completa encargado, sucursal y fecha.');
+      return;
+    }
+    if (archivos.length === 0) {
+      mostrarError('Agrega al menos una foto antes de enviar.');
+      return;
+    }
+
+    document.getElementById('mensajeError').style.display = 'none';
+    document.getElementById('btnEnviar').disabled = true;
+    document.getElementById('barraWrap').style.display = 'block';
+
+    let enviadas = 0;
+    const total  = archivos.length;
+
+    for (let i = 0; i < total; i++) {
+      const f = archivos[i];
+      actualizarBarra(i, total, `Subiendo foto ${i+1} de ${total}…`);
+      try {
+        const b64 = await toBase64(f);
+        const ext  = f.name.split('.').pop() || 'jpg';
+        const nombre = `${fecha}_${encargado.split(' ')[0]}_${i+1}.${ext}`;
+
+        const payload = {
+          action:    'uploadFile',
+          filename:  nombre,
+          mimeType:  f.type || 'image/jpeg',
+          data:      b64,
+          encargado,
+          sucursal,
+          fecha
+        };
+
+        await fetch(APPS_SCRIPT_URL, {
+          method:  'POST',
+          mode:    'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload)
+        });
+        enviadas++;
+      } catch(err) {
+        console.error('Error foto', i, err);
+      }
+    }
+
+    actualizarBarra(total, total, 'Listo');
+    document.getElementById('barraWrap').style.display = 'none';
+    document.getElementById('btnEnviar').style.display = 'none';
+
+    document.getElementById('resumenFinal').textContent =
+      `${enviadas} foto${enviadas>1?'s':''} · ${encargado.split(' ')[0]} · ${sucursal} · ${fecha}`;
+    document.getElementById('mensajeFinal').style.display = 'block';
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function actualizarBarra(actual, total, texto) {
+    const pct = Math.round((actual / total) * 100);
+    document.getElementById('barraRelleno').style.width = pct + '%';
+    document.getElementById('barraTexto').textContent   = texto;
+  }
+
+  function mostrarError(msg) {
+    const el = document.getElementById('mensajeError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+</script>
+</body>
+</html>
